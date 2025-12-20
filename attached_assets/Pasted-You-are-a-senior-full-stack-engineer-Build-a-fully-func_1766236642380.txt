@@ -1,0 +1,205 @@
+You are a senior full-stack engineer.
+Build a fully functional, production-ready web application named “Smart Plant Care” as a Final Year Project (FYP).
+
+⚠️ IMPORTANT DESIGN RULE
+
+The UI must exactly match the provided Figma design images (pixel-close layout, spacing, colors, sections, and screen structure).
+
+Do NOT redesign or simplify UI.
+
+Follow the uploaded images screen-by-screen.
+
+🧱 TECH STACK (MANDATORY)
+
+Frontend: React + Tailwind CSS
+
+Backend: Node.js + Express
+
+Database: MongoDB
+
+Authentication: JWT
+
+Image Upload: Multer
+
+AI Simulation: Rule-based logic (no external API required)
+
+Responsive: Mobile + Desktop
+
+📂 PROJECT STRUCTURE
+
+Create a clean, professional folder structure:
+
+/client (React frontend)
+
+/server (Node + Express backend)
+
+/models, /routes, /controllers
+
+.env for secrets
+
+👥 USER ROLES
+1. Normal User
+
+Register & Login
+
+Upload plant image for disease detection
+
+View disease result + solution
+
+Buy plants
+
+Sell plants
+
+Hire gardeners
+
+Checkout & order confirmation
+
+2. Admin
+
+Admin login
+
+View all users
+
+Manage plant listings
+
+Manage gardener requests
+
+View orders
+
+🖼️ SCREENS (MATCH FIGMA EXACTLY)
+
+Implement ALL these screens exactly as per design:
+
+Landing Page
+
+Navbar
+
+Hero section
+
+Features
+
+Call-to-action
+
+Authentication
+
+Login
+
+Register
+
+User Dashboard
+
+Quick access cards
+
+Plant Disease Detection Page
+
+Image upload
+
+Preview image
+
+“Detect Disease” button
+
+Show:
+
+Disease name
+
+Cause
+
+Solution
+
+Suggested medicine
+
+Buy & Sell Plants
+
+Plant listing grid
+
+Sell plant form
+
+Buy plant button
+
+Checkout Page
+
+Order summary
+
+Address form
+
+Place order button
+
+Hire Gardener
+
+Gardener cards
+
+Hire request form
+
+Admin Panel
+
+Dashboard stats
+
+User management
+
+Product management
+
+Orders view
+
+🌿 PLANT DISEASE LOGIC (SIMULATED AI)
+
+Implement logic such as:
+
+If filename or selected option contains “leaf spot” → show Leaf Spot disease
+
+If “yellow” → Nitrogen deficiency
+
+If “brown” → Fungal infection
+
+Each result must return:
+
+Disease name
+
+Description
+
+Treatment steps
+
+Recommended medicine
+
+🔐 AUTHENTICATION RULES
+
+JWT based login
+
+Protected routes
+
+Admin-only routes secured
+
+🎨 UI & UX RULES
+
+Use Tailwind CSS
+
+Same colors, fonts, spacing as design
+
+Rounded cards & buttons
+
+Smooth hover effects
+
+Mobile responsive layout
+
+📦 DATABASE MODELS
+
+User
+
+Plant
+
+Order
+
+Gardener
+
+DiseaseResult
+
+✅ FINAL REQUIREMENTS
+
+App must RUN without errors in Replit
+
+Include sample seed data
+
+Add comments for FYP viva explanation
+
+Clean code, readable, modular
+
+This project is for university final submission, so code quality, UI accuracy, and functionality are critical.
