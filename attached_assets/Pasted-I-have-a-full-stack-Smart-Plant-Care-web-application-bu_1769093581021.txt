@@ -1,0 +1,145 @@
+I have a full-stack Smart Plant Care web application built with:
+- Frontend: React + Vite
+- Backend: Node.js + Express + TypeScript
+- Auth: Passport.js (session-based)
+- Database: PostgreSQL (Drizzle ORM)
+
+The project is FUNCTIONAL but PARTIALLY COMPLETE.
+I want you to EXTEND the EXISTING CODE (do NOT rewrite from scratch).
+
+Your task:
+Implement the MISSING FEATURES listed below while keeping the current structure, routes, and database style.
+
+---------------------------------------
+1. AUTHENTICATION (IMPROVEMENTS)
+---------------------------------------
+Already implemented:
+- Login / Register / Logout
+- Session-based auth
+- Field validation
+
+Add:
+- Confirm password validation (backend)
+- Field-wise error messages (email, username, password)
+- Prevent weak passwords
+- Do NOT auto-login after registration (redirect to login instead)
+
+---------------------------------------
+2. PLANT CATALOG / MARKETPLACE
+---------------------------------------
+Already implemented:
+- Get all plants
+- Get plant by ID
+- Seller create plant
+
+Add:
+- Search plants by name
+- Filter plants by category
+- Filter plants by price range
+- Pagination support
+- Seller profile link on plant detail
+
+---------------------------------------
+3. CART SYSTEM (NEW)
+---------------------------------------
+Completely missing – implement fully:
+- Temporary cart per user (session or DB)
+- Add item to cart
+- Remove item from cart
+- Update quantity
+- View cart API
+
+---------------------------------------
+4. ORDERS (IMPROVEMENTS)
+---------------------------------------
+Already implemented:
+- Create order
+- View orders
+
+Add:
+- Order status (pending, paid, delivered, cancelled)
+- Order cancellation (buyer)
+- Payment reference field
+- Order status update logic
+
+---------------------------------------
+5. PAYMENTS (SIMULATED)
+---------------------------------------
+Missing – implement simulated payments:
+- Create payment intent (fake)
+- Store payment reference
+- Payment status (success / failed)
+- Link payment to order
+(NO real gateway needed – simulation only for FYP)
+
+---------------------------------------
+6. DISEASE DETECTION (IMPROVE EXISTING)
+---------------------------------------
+Already implemented:
+- Disease detection logic
+- Logs stored in DB
+
+Improve:
+- Accept real image file upload (multer)
+- Validate image type & size
+- Add image preprocessing comments:
+  - resize
+  - normalize
+- Treat detection as "Simulated CNN Inference"
+- Dynamic confidence score (90–99%)
+- Disease detail page API
+
+---------------------------------------
+7. GARDENER BOOKING SYSTEM
+---------------------------------------
+Already implemented:
+- List gardeners
+
+Add:
+- Booking table (userId, gardenerId, status)
+- Booking statuses (pending, approved, rejected)
+- Gardener accept / reject booking
+- My bookings API (user & gardener)
+- Booking history
+
+---------------------------------------
+8. USER PROFILE SYSTEM
+---------------------------------------
+Completely missing – implement:
+- Get profile API
+- Update profile API
+- Change password
+- Upload profile image
+
+---------------------------------------
+9. SELLER FEATURES
+---------------------------------------
+Add:
+- Seller earnings calculation
+- Seller order summary
+- Plant stock management
+- Seller dashboard APIs
+
+---------------------------------------
+10. ADMIN PANEL (BACKEND ONLY)
+---------------------------------------
+Missing – implement APIs:
+- Admin dashboard stats
+- User management (block / view)
+- Reports APIs
+- Earnings overview
+(No frontend UI needed, API only)
+
+---------------------------------------
+IMPORTANT RULES
+---------------------------------------
+- Extend existing routes & schema
+- Use PostgreSQL + Drizzle ORM
+- Keep code modular
+- Add comments for FYP explanation
+- Simulated logic is acceptable
+- Do NOT break existing features
+- Follow REST API standards
+
+Goal:
+Make the system fully aligned with the provided DESIGN and suitable for a Final Year Project (FYP).
