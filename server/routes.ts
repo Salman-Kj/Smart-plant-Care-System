@@ -200,6 +200,48 @@ export async function registerRoutes(
     }
   });
 
+  // === CART ===
+  app.get(api.cart.list.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    const items = await storage.getCartItems((req.user as any).id);
+    res.json(items);
+  });
+
+  app.post(api.cart.add.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    try {
+      const { plantId, quantity } = req.body;
+      const item = await storage.addToCart({ 
+        userId: (req.user as any).id, 
+        plantId, 
+        quantity: quantity || 1 
+      });
+      res.status(201).json(item);
+    } catch (err) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.patch(api.cart.update.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    try {
+      const plantId = Number(req.params.plantId);
+      const { quantity } = req.body;
+      const item = await storage.updateCartQuantity((req.user as any).id, plantId, quantity);
+      if (!item) return res.status(404).json({ message: "Item not found" });
+      res.json(item);
+    } catch (err) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete(api.cart.remove.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    const plantId = Number(req.params.plantId);
+    await storage.removeFromCart((req.user as any).id, plantId);
+    res.json({ message: "Removed from cart" });
+  });
+
   // SEED DATA
   // Check if gardeners exist, if not seed them
   const existingGardeners = await storage.getGardeners();

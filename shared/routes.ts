@@ -142,6 +142,38 @@ export const api = {
         200: z.array(z.custom<typeof orders.$inferSelect>()),
       }
     }
+  },
+  cart: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/cart',
+      responses: {
+        200: z.array(z.any()), // Simplified for combined cartItem + plant
+      }
+    },
+    add: {
+      method: 'POST' as const,
+      path: '/api/cart',
+      input: z.object({ plantId: z.number(), quantity: z.number().optional() }),
+      responses: {
+        201: z.any(),
+      }
+    },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/cart/:plantId',
+      input: z.object({ quantity: z.number() }),
+      responses: {
+        200: z.any(),
+      }
+    },
+    remove: {
+      method: 'DELETE' as const,
+      path: '/api/cart/:plantId',
+      responses: {
+        200: z.object({ message: z.string() }),
+      }
+    }
   }
 };
 

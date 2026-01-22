@@ -1,11 +1,11 @@
 import { db } from "./db";
 import {
-  users, plants, gardeners, orders, diseaseLogs,
+  users, plants, gardeners, orders, diseaseLogs, cartItems,
   type User, type InsertUser, type Plant, type InsertPlant,
   type Gardener, type InsertGardener, type Order, type InsertOrder,
-  type DiseaseLog, type InsertDiseaseLog
+  type DiseaseLog, type InsertDiseaseLog, type CartItem, type InsertCartItem
 } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -31,10 +31,17 @@ export interface IStorage {
   // Disease Logs
   logDisease(log: InsertDiseaseLog): Promise<DiseaseLog>;
   getDiseaseLogs(userId: number): Promise<DiseaseLog[]>;
+
+  // Cart
+  getCartItems(userId: number): Promise<(CartItem & { plant: Plant })[]>;
+  addToCart(item: InsertCartItem): Promise<CartItem>;
+  updateCartQuantity(userId: number, plantId: number, quantity: number): Promise<CartItem | undefined>;
+  removeFromCart(userId: number, plantId: number): Promise<void>;
+  clearCart(userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
-  // Users
+  // ... existing methods ...
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
@@ -102,6 +109,53 @@ export class DatabaseStorage implements IStorage {
 
   async getDiseaseLogs(userId: number): Promise<DiseaseLog[]> {
     return await db.select().from(diseaseLogs).where(eq(diseaseLogs.userId, userId));
+  }
+
+  // Cart
+  async getCartItems(userId: number): Promise<(CartItem & { plant: Plant })[]> {
+    const results = await db.select({
+      cartItem: cartItems,
+      plant: plants
+    })
+    .from(cartItems)
+    .where(eq(cartItems.userId, userId))
+    .innerJoin(plants, eq(cartItems.plantId, plants.id));
+
+    return results.map(r => ({ ...r.cartItem, plant: r.plant }));
+  }
+
+  async addToCart(item: InsertCartItem): Promise<CartItem> {
+    // Check if item already exists
+    const [existing] = await db.select().from(cartItems).where(
+      and(eq(cartItems.userId, item.userId), eq(cartItems.plantId, item.plantId))
+    );
+
+    if (existing) {
+      const [updated] = await db.update(cartItems)
+        .set({ quantity: existing.quantity + (item.quantity || 1) })
+        .where(eq(cartItems.id, existing.id))
+        .returning();
+      return updated;
+    }
+
+    const [newItem] = await db.insert(cartItems).values(item).returning();
+    return newItem;
+  }
+
+  async updateCartQuantity(userId: number, plantId: number, quantity: number): Promise<CartItem | undefined> {
+    const [updated] = await db.update(cartItems)
+      .set({ quantity })
+      .where(and(eq(cartItems.userId, userId), eq(cartItems.plantId, plantId)))
+      .returning();
+    return updated;
+  }
+
+  async removeFromCart(userId: number, plantId: number): Promise<void> {
+    await db.delete(cartItems).where(and(eq(cartItems.userId, userId), eq(cartItems.plantId, plantId)));
+  }
+
+  async clearCart(userId: number): Promise<void> {
+    await db.delete(cartItems).where(eq(cartItems.userId, userId));
   }
 }
 

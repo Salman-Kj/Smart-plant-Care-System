@@ -69,6 +69,17 @@ export const diseaseLogs = pgTable("disease_logs", {
 export const insertDiseaseLogSchema = createInsertSchema(diseaseLogs).omit({ id: true, createdAt: true });
 
 
+// === CART ===
+export const cartItems = pgTable("cart_items", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  plantId: integer("plant_id").references(() => plants.id).notNull(),
+  quantity: integer("quantity").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: true, createdAt: true });
+
 // === TYPES ===
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -77,6 +88,8 @@ export type InsertPlant = z.infer<typeof insertPlantSchema>;
 export type Gardener = typeof gardeners.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type DiseaseLog = typeof diseaseLogs.$inferSelect;
+export type CartItem = typeof cartItems.$inferSelect;
+export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 
 export type DiseaseResult = {
   disease: string;
