@@ -185,7 +185,10 @@ export async function registerRoutes(
           imageUrl: req.body.imageUrl || "uploaded-file",
           imageName: plantName,
           diseaseName: result.disease || "Unknown",
-          confidence: Number(result.confidence) || 95
+          confidence: Number(result.confidence) || 95,
+          cause: result.cause,
+          solution: result.solution,
+          medicine: result.medicine
         });
       }
 

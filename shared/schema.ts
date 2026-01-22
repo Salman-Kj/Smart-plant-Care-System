@@ -59,10 +59,13 @@ export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, cre
 export const diseaseLogs = pgTable("disease_logs", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
-  imageName: text("image_name"), // For simulation logic
+  imageName: text("image_name"),
   imageUrl: text("image_url").notNull(),
   diseaseName: text("disease_name").notNull(),
   confidence: integer("confidence"),
+  cause: text("cause"),
+  solution: text("solution"),
+  medicine: text("medicine"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
