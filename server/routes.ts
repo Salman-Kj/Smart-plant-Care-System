@@ -116,58 +116,61 @@ export async function registerRoutes(
   });
 
   // === DISEASE DETECTION ===
-  app.post(api.disease.detect.path, async (req, res) => {
-    // Simulated AI Logic
-    // If filename or selected option contains “leaf spot” → show Leaf Spot disease
-    // If “yellow” → Nitrogen deficiency
-    // If “brown” → Fungal infection
-    
-    const { imageName, imageUrl } = req.body;
-    const lowerName = (imageName || "").toLowerCase();
-    const lowerUrl = (imageUrl || "").toLowerCase();
-    
-    let result = {
-      name: "Healthy",
-      cause: "N/A",
-      solution: "Continue regular care.",
-      medicine: "None"
-    };
+  app.post(api.disease.detect.path, upload.single("image"), async (req, res) => {
+    // If it's a JSON request with imageUrl/imageName (simulated logic)
+    if (!req.file) {
+      // Keep existing simulation logic for backward compatibility with UI
+      const { imageName, imageUrl } = req.body;
+      const lowerName = (imageName || "").toLowerCase();
+      const lowerUrl = (imageUrl || "").toLowerCase();
+      
+      let result = {
+        name: "Healthy",
+        cause: "N/A",
+        solution: "Continue regular care.",
+        medicine: "None"
+      };
 
-    if (lowerName.includes("leaf spot") || lowerUrl.includes("leaf-spot")) {
-      result = {
-        name: "Leaf Spot",
-        cause: "Fungal or bacterial infection.",
-        solution: "Remove infected leaves, improve air circulation.",
-        medicine: "Copper-based fungicide"
-      };
-    } else if (lowerName.includes("yellow") || lowerUrl.includes("yellow")) {
-      result = {
-        name: "Nitrogen Deficiency",
-        cause: "Lack of nitrogen in soil.",
-        solution: "Apply nitrogen-rich fertilizer.",
-        medicine: "NPK Fertilizer (High N)"
-      };
-    } else if (lowerName.includes("brown") || lowerUrl.includes("brown")) {
-      result = {
-        name: "Fungal Infection",
-        cause: "Overwatering or humidity.",
-        solution: "Reduce watering, apply fungicide.",
-        medicine: "Organic Fungicide"
-      };
+      if (lowerName.includes("leaf spot") || lowerUrl.includes("leaf-spot")) {
+        result = {
+          name: "Leaf Spot",
+          cause: "Fungal or bacterial infection.",
+          solution: "Remove infected leaves, improve air circulation.",
+          medicine: "Copper-based fungicide"
+        };
+      } else if (lowerName.includes("yellow") || lowerUrl.includes("yellow")) {
+        result = {
+          name: "Nitrogen Deficiency",
+          cause: "Lack of nitrogen in soil.",
+          solution: "Apply nitrogen-rich fertilizer.",
+          medicine: "NPK Fertilizer (High N)"
+        };
+      } else if (lowerName.includes("brown") || lowerUrl.includes("brown")) {
+        result = {
+          name: "Fungal Infection",
+          cause: "Overwatering or humidity.",
+          solution: "Reduce watering, apply fungicide.",
+          medicine: "Organic Fungicide"
+        };
+      }
+
+      // Log if user is logged in
+      if (req.isAuthenticated()) {
+        await storage.logDisease({
+          userId: (req.user as any).id,
+          imageUrl: imageUrl || "simulated-url",
+          imageName: imageName || "Simulated Image",
+          diseaseName: result.name,
+          confidence: 95
+        });
+      }
+
+      return res.json(result);
     }
 
-    // Log if user is logged in
-    if (req.isAuthenticated()) {
-      await storage.logDisease({
-        userId: (req.user as any).id,
-        imageUrl: imageUrl,
-        imageName: imageName || "Uploaded Image",
-        diseaseName: result.name,
-        confidence: 95
-      });
-    }
-
-    res.json(result);
+    // Real image file upload received via multer
+    // Just return success as requested
+    res.json({ message: "Image received successfully" });
   });
   
   app.get(api.disease.history.path, async (req, res) => {
