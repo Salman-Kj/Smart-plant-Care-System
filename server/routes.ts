@@ -242,6 +242,12 @@ export async function registerRoutes(
     res.json({ message: "Removed from cart" });
   });
 
+  app.delete("/api/cart/clear", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    await storage.clearCart((req.user as any).id);
+    res.json({ message: "Cart cleared" });
+  });
+
   // SEED DATA
   // Check if gardeners exist, if not seed them
   const existingGardeners = await storage.getGardeners();

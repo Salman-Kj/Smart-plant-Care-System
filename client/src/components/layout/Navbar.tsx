@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
-import { Leaf, LogOut, User as UserIcon, ShoppingCart } from "lucide-react";
+import { Leaf, LogOut, User as UserIcon, ShoppingCart, Package } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,6 +80,13 @@ export function Navbar() {
                     <p className="text-xs leading-none text-muted-foreground">{user.email || user.role}</p>
                   </div>
                 </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <Link href="/orders">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Package className="mr-2 h-4 w-4" />
+                    <span>My Orders</span>
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => logout.mutate()}>
                   <LogOut className="mr-2 h-4 w-4" />

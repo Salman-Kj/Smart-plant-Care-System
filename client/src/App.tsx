@@ -9,6 +9,8 @@ import Home from "@/pages/Home";
 import AuthPage from "@/pages/Auth";
 import PlantsPage from "@/pages/Plants";
 import CartPage from "@/pages/Cart";
+import MyOrdersPage from "@/pages/MyOrders";
+import OrderConfirmationPage from "@/pages/OrderConfirmation";
 import DiseaseDetection from "@/pages/DiseaseDetection";
 import GardenersPage from "@/pages/Gardeners";
 import NotFound from "@/pages/not-found";
@@ -20,6 +22,8 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/plants" component={PlantsPage} />
       <Route path="/cart" component={CartPage} />
+      <Route path="/orders" component={MyOrdersPage} />
+      <Route path="/orders/confirmation/:id" component={OrderConfirmationPage} />
       <Route path="/disease" component={DiseaseDetection} />
       <Route path="/gardeners" component={GardenersPage} />
       <Route component={NotFound} />
