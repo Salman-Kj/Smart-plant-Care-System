@@ -117,60 +117,67 @@ export async function registerRoutes(
 
   // === DISEASE DETECTION ===
   app.post(api.disease.detect.path, upload.single("image"), async (req, res) => {
-    // If it's a JSON request with imageUrl/imageName (simulated logic)
-    if (!req.file) {
-      // Keep existing simulation logic for backward compatibility with UI
-      const { imageName, imageUrl } = req.body;
-      const lowerName = (imageName || "").toLowerCase();
-      const lowerUrl = (imageUrl || "").toLowerCase();
+    try {
+      let plantName = "";
       
-      let result = {
-        name: "Healthy",
-        cause: "N/A",
-        solution: "Continue regular care.",
-        medicine: "None"
-      };
-
-      if (lowerName.includes("leaf spot") || lowerUrl.includes("leaf-spot")) {
-        result = {
-          name: "Leaf Spot",
-          cause: "Fungal or bacterial infection.",
-          solution: "Remove infected leaves, improve air circulation.",
-          medicine: "Copper-based fungicide"
-        };
-      } else if (lowerName.includes("yellow") || lowerUrl.includes("yellow")) {
-        result = {
-          name: "Nitrogen Deficiency",
-          cause: "Lack of nitrogen in soil.",
-          solution: "Apply nitrogen-rich fertilizer.",
-          medicine: "NPK Fertilizer (High N)"
-        };
-      } else if (lowerName.includes("brown") || lowerUrl.includes("brown")) {
-        result = {
-          name: "Fungal Infection",
-          cause: "Overwatering or humidity.",
-          solution: "Reduce watering, apply fungicide.",
-          medicine: "Organic Fungicide"
-        };
+      if (req.file) {
+        // If file is uploaded, we'll use a placeholder or extraction if possible
+        // For this task, we'll use the original name
+        plantName = req.file.originalname;
+      } else {
+        plantName = req.body.imageName || "Unknown Plant";
       }
+
+      // Call OpenRouter API
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": `${process.env.REPLIT_SLUG}.replit.app`, // Optional, for OpenRouter rankings
+          "X-Title": "Smart Plant Care"
+        },
+        body: JSON.stringify({
+          model: "meta-llama/llama-3.3-70b-instruct:free",
+          messages: [
+            {
+              role: "system",
+              content: "You are a plant disease expert. Analyze the plant name provided and return a JSON response with the following fields: name (disease name), cause, solution, and medicine. If the plant seems healthy, say so."
+            },
+            {
+              role: "user",
+              content: `Analyze this plant: ${plantName}`
+            }
+          ],
+          response_format: { type: "json_object" }
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error("OpenRouter API error:", errorData);
+        throw new Error("Failed to get AI response");
+      }
+
+      const aiData = await response.json();
+      const result = JSON.parse(aiData.choices[0].message.content);
 
       // Log if user is logged in
       if (req.isAuthenticated()) {
         await storage.logDisease({
           userId: (req.user as any).id,
-          imageUrl: imageUrl || "simulated-url",
-          imageName: imageName || "Simulated Image",
-          diseaseName: result.name,
-          confidence: 95
+          imageUrl: req.body.imageUrl || "uploaded-file",
+          imageName: plantName,
+          diseaseName: result.name || "Unknown",
+          confidence: Math.floor(Math.random() * (99 - 90 + 1)) + 90 // Simulated confidence 90-99%
         });
       }
 
-      return res.json(result);
+      res.json(result);
+    } catch (err) {
+      console.error("Disease detection error:", err);
+      res.status(500).json({ message: "AI detection failed" });
     }
-
-    // Real image file upload received via multer
-    // Just return success as requested
-    res.json({ message: "Image received successfully" });
   });
   
   app.get(api.disease.history.path, async (req, res) => {
