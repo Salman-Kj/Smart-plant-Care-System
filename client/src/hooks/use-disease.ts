@@ -14,20 +14,21 @@ export function useDisease() {
     queryFn: async () => {
       const res = await fetch(api.disease.history.path, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch history");
-      return api.disease.history.responses[200].parse(await res.json());
+      return res.json();
     },
   });
 
   const detectMutation = useMutation({
-    mutationFn: async (data: DetectInput) => {
+    mutationFn: async (data: FormData | DetectInput) => {
+      const isFormData = data instanceof FormData;
       const res = await fetch(api.disease.detect.path, {
         method: api.disease.detect.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: isFormData ? data : JSON.stringify(data),
+        headers: isFormData ? {} : { "Content-Type": "application/json" },
         credentials: "include",
       });
       if (!res.ok) throw new Error("Detection failed");
-      return api.disease.detect.responses[200].parse(await res.json());
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.disease.history.path] });
