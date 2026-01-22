@@ -134,7 +134,7 @@ export async function registerRoutes(
         headers: {
           "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": `${process.env.REPLIT_SLUG}.replit.app`, // Optional, for OpenRouter rankings
+          "HTTP-Referer": `${process.env.REPLIT_SLUG}.replit.app`,
           "X-Title": "Smart Plant Care"
         },
         body: JSON.stringify({
@@ -142,7 +142,7 @@ export async function registerRoutes(
           messages: [
             {
               role: "system",
-              content: "You are a plant disease expert. Analyze the plant name provided and return a JSON response with the following fields: name (disease name), cause, solution, and medicine. If the plant seems healthy, say so."
+              content: "You are a plant disease expert. Analyze the plant name provided and return a STRICT JSON response with the following fields: disease (the name of the disease), confidence (a number between 90 and 99), cause, solution, and medicine. If the plant seems healthy, indicate it in the disease field."
             },
             {
               role: "user",
@@ -160,7 +160,23 @@ export async function registerRoutes(
       }
 
       const aiData = await response.json();
-      const result = JSON.parse(aiData.choices[0].message.content);
+      const content = aiData.choices[0].message.content;
+      
+      let result;
+      try {
+        result = JSON.parse(content);
+        
+        // Strict validation of required fields
+        const requiredFields = ["disease", "confidence", "cause", "solution", "medicine"];
+        for (const field of requiredFields) {
+          if (!(field in result)) {
+            throw new Error(`Missing required field: ${field}`);
+          }
+        }
+      } catch (parseErr) {
+        console.error("AI response validation failed:", content);
+        return res.status(500).json({ message: "Invalid AI response structure" });
+      }
 
       // Log if user is logged in
       if (req.isAuthenticated()) {
@@ -168,8 +184,8 @@ export async function registerRoutes(
           userId: (req.user as any).id,
           imageUrl: req.body.imageUrl || "uploaded-file",
           imageName: plantName,
-          diseaseName: result.name || "Unknown",
-          confidence: Math.floor(Math.random() * (99 - 90 + 1)) + 90 // Simulated confidence 90-99%
+          diseaseName: result.disease || "Unknown",
+          confidence: Number(result.confidence) || 95
         });
       }
 
