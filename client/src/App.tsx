@@ -8,6 +8,7 @@ import { Footer } from "@/components/layout/Footer";
 import Home from "@/pages/Home";
 import AuthPage from "@/pages/Auth";
 import PlantsPage from "@/pages/Plants";
+import CartPage from "@/pages/Cart";
 import DiseaseDetection from "@/pages/DiseaseDetection";
 import GardenersPage from "@/pages/Gardeners";
 import NotFound from "@/pages/not-found";
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/plants" component={PlantsPage} />
+      <Route path="/cart" component={CartPage} />
       <Route path="/disease" component={DiseaseDetection} />
       <Route path="/gardeners" component={GardenersPage} />
       <Route component={NotFound} />

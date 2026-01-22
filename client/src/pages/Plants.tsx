@@ -1,6 +1,6 @@
 import { usePlants } from "@/hooks/use-plants";
 import { useAuth } from "@/hooks/use-auth";
-import { useOrders } from "@/hooks/use-orders";
+import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -63,24 +63,17 @@ export default function PlantsPage() {
 }
 
 function PlantCard({ plant }: { plant: any }) {
-  const { createOrder } = useOrders();
+  const { addToCart } = useCart();
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const handleBuy = () => {
+  const handleAddToCart = () => {
     if (!user) {
-      toast({ title: "Login required", description: "Please login to purchase items.", variant: "destructive" });
+      toast({ title: "Login required", description: "Please login to add items to cart.", variant: "destructive" });
       return;
     }
     
-    // Simplified order creation
-    createOrder.mutate({
-      userId: user.id,
-      totalAmount: plant.price,
-      address: "Default User Address", // In real app, prompt for address
-      items: [{ plantId: plant.id, name: plant.name, price: plant.price, quantity: 1 }],
-      status: "pending"
-    });
+    addToCart.mutate({ plantId: plant.id, quantity: 1 });
   };
 
   return (
@@ -104,13 +97,13 @@ function PlantCard({ plant }: { plant: any }) {
         <p className="text-muted-foreground text-sm line-clamp-2 mb-4 flex-grow">{plant.description}</p>
         
         <Button 
-          onClick={handleBuy} 
-          disabled={createOrder.isPending}
+          onClick={handleAddToCart} 
+          disabled={addToCart.isPending}
           className="w-full mt-auto rounded-xl"
         >
-          {createOrder.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+          {addToCart.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (
             <>
-              <ShoppingCart className="mr-2 h-4 w-4" /> Buy Now
+              <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
             </>
           )}
         </Button>

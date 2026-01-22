@@ -1,7 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
-import { Leaf, LogOut, User as UserIcon } from "lucide-react";
+import { Leaf, LogOut, User as UserIcon, ShoppingCart } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +15,7 @@ import {
 export function Navbar() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const { itemCount } = useCart();
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -50,7 +52,20 @@ export function Navbar() {
         </div>
 
         {/* Auth Buttons */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
+          {user && (
+            <Link href="/cart">
+              <Button variant="ghost" size="icon" className="relative rounded-full hover:bg-primary/10 transition-colors">
+                <ShoppingCart className="h-5 w-5 text-primary" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
+                    {itemCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
+          )}
+
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
