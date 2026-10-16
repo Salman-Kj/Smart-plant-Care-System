@@ -6,6 +6,23 @@ import { CheckCircle2, Package, Calendar, DollarSign, ArrowLeft } from "lucide-r
 import { format } from "date-fns";
 import { Order } from "@shared/schema";
 
+function getOrderStatusMessage(status: string): string {
+  const s = (status || "").toLowerCase();
+  if (s === "pending") return "Order confirmed. We'll process and dispatch soon.";
+  if (s === "dispatched") return "Dispatched. Delivery expected within 24 hours.";
+  if (s === "delivered") return "Delivered.";
+  if (s === "completed") return "Order complete.";
+  return status || "—";
+}
+
+function getOrderStatusBadgeClass(status: string): string {
+  const s = (status || "").toLowerCase();
+  if (s === "pending") return "bg-yellow-100 text-yellow-700";
+  if (s === "dispatched") return "bg-blue-100 text-blue-700";
+  if (s === "delivered" || s === "completed") return "bg-green-100 text-green-700";
+  return "bg-gray-100 text-gray-700";
+}
+
 export default function OrderConfirmationPage() {
   const { id } = useParams();
   
@@ -55,7 +72,7 @@ export default function OrderConfirmationPage() {
                 <DollarSign className="h-4 w-4" />
                 Total Amount
               </div>
-              <p className="font-bold text-lg text-primary">${(order.totalAmount / 100).toFixed(2)}</p>
+              <p className="font-bold text-lg text-primary">Rs{(order.totalAmount / 100).toFixed(2)}</p>
             </div>
           </div>
 
@@ -68,18 +85,23 @@ export default function OrderConfirmationPage() {
                     <span className="font-medium">{item.name}</span>
                     <span className="text-muted-foreground">x{item.quantity}</span>
                   </div>
-                  <span className="font-medium">${(item.price * item.quantity / 100).toFixed(2)}</span>
+                  <span className="font-medium">Rs{(item.price * item.quantity / 100).toFixed(2)}</span>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="border-t pt-6">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Status</span>
-              <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-yellow-100 text-yellow-700">
-                {order.status}
-              </span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span className="text-sm font-medium">Track your order</span>
+              <div className="flex flex-col gap-1">
+                <span className={`inline-flex w-fit px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getOrderStatusBadgeClass(order.status || "")}`}>
+                  {order.status || "pending"}
+                </span>
+                <p className="text-sm text-muted-foreground">
+                  {getOrderStatusMessage(order.status || "")}
+                </p>
+              </div>
             </div>
           </div>
         </CardContent>

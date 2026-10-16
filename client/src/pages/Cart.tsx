@@ -1,66 +1,46 @@
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
-import { useOrders } from "@/hooks/use-orders";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Loader2 } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, ArrowRight } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Link, useLocation } from "wouter";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { api } from "@shared/routes";
 
 export default function CartPage() {
   const { items, isLoading, updateQuantity, removeFromCart, total } = useCart();
-  const { createOrder } = useOrders();
   const { user } = useAuth();
-  const { toast } = useToast();
   const [, setLocation] = useLocation();
 
   const handleCheckout = async () => {
-    if (!user) return;
-
-    try {
-      const orderData = {
-        userId: user.id,
-        totalAmount: total,
-        address: "Default Address", // In a real app, this would be a form field
-        items: items.map(item => ({
-          plantId: item.plantId,
-          name: item.plant.name,
-          price: item.plant.price,
-          quantity: item.quantity
-        })),
-        status: "pending"
-      };
-
-      createOrder.mutate(orderData, {
-        onSuccess: async (order) => {
-          // Clear cart on backend
-          await apiRequest("DELETE", "/api/cart/clear");
-          // Invalidate cart query
-          queryClient.invalidateQueries({ queryKey: [api.cart.list.path] });
-          
-          toast({
-            title: "Order placed successfully!",
-            description: "Your plants are on their way.",
-          });
-          
-          setLocation(`/orders/confirmation/${order.id}`);
-        }
-      });
-    } catch (error) {
-      toast({
-        title: "Checkout failed",
-        description: "There was an error processing your order.",
-        variant: "destructive"
-      });
+    if (!user) {
+      setLocation("/auth");
+      return;
     }
+    setLocation("/checkout");
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      <div className="container mx-auto px-4 py-12">
+        <Skeleton className="h-10 w-48 mb-10" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div className="lg:col-span-2 space-y-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex flex-col sm:flex-row gap-4 p-6 rounded-xl bg-secondary/10 border border-border/60">
+                <Skeleton className="w-full sm:w-40 h-40 rounded-lg shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-6 w-20" />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-32 w-full rounded-xl" />
+            <Skeleton className="h-12 w-full rounded-full" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -100,9 +80,23 @@ export default function CartPage() {
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <h3 className="text-xl font-bold font-display">{item.plant.name}</h3>
-                      <p className="text-sm text-muted-foreground capitalize">{item.plant.category}</p>
+                      <span
+                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                          item.plant.category === "medicine"
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : item.plant.category === "fertilizer"
+                              ? "border-amber-200 bg-amber-50 text-amber-700"
+                              : item.plant.category === "accessory"
+                                ? "border-blue-200 bg-blue-50 text-blue-700"
+                                : "border-primary/20 bg-primary/5 text-primary"
+                        }`}
+                      >
+                        {item.plant.category}
+                      </span>
                     </div>
-                    <span className="text-lg font-bold text-primary">${((item.plant.price * item.quantity) / 100).toFixed(2)}</span>
+                    <span className="text-lg font-bold text-primary">
+                      Rs {((item.plant.price * item.quantity) / 100).toFixed(0)}
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between mt-6">
@@ -152,7 +146,7 @@ export default function CartPage() {
             <CardContent className="space-y-4">
               <div className="flex justify-between text-sm">
                 <span>Subtotal</span>
-                <span>${(total / 100).toFixed(2)}</span>
+                <span>Rs {(total / 100).toFixed(0)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Shipping</span>
@@ -160,20 +154,15 @@ export default function CartPage() {
               </div>
               <div className="border-t pt-4 flex justify-between text-xl font-bold">
                 <span>Total</span>
-                <span className="text-primary">${(total / 100).toFixed(2)}</span>
+                <span className="text-primary">Rs {(total / 100).toFixed(0)}</span>
               </div>
             </CardContent>
             <CardFooter>
               <Button 
                 className="w-full rounded-full h-12 text-lg shadow-lg shadow-primary/20"
                 onClick={handleCheckout}
-                disabled={createOrder.isPending}
               >
-                {createOrder.isPending ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <>Checkout <ArrowRight className="ml-2 h-5 w-5" /></>
-                )}
+                Checkout <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </CardFooter>
           </Card>

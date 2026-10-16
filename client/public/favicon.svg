@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Simple leaf shape -->
+  <path d="M50 10 
+           C30 10, 15 30, 15 50 
+           C15 70, 30 85, 50 90 
+           C70 85, 85 70, 85 50 
+           C85 30, 70 10, 50 10 Z" 
+        fill="#22c55e"/>
+  <!-- Leaf vein -->
+  <line x1="50" y1="10" x2="50" y2="90" stroke="#16a34a" stroke-width="2"/>
+</svg>

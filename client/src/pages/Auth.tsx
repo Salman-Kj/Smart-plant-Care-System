@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,19 +6,59 @@ import { insertUserSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useLocation } from "wouter";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Link, useLocation } from "wouter";
 import { z } from "zod";
+import { cleanupStuckOverlays } from "@/lib/overlay-cleanup";
 
 export default function AuthPage() {
   const { login, register, user } = useAuth();
   const [, setLocation] = useLocation();
 
-  if (user) {
-    setLocation("/");
-    return null;
-  }
+  useEffect(() => {
+    if (!user) return;
+    
+    // Cleanup overlays immediately when user is set (login/register success)
+    cleanupStuckOverlays();
+    document.body.classList.remove("modal-open", "overflow-hidden");
+    document.body.style.pointerEvents = "auto";
+    document.body.style.overflow = "";
+    document.body.removeAttribute("data-scroll-locked");
+    document.body.removeAttribute("data-modal-open");
+    
+    // Remove only closed overlay/backdrop divs (not page content)
+    const closedOverlays = document.querySelectorAll('[data-radix-overlay][data-state="closed"], [data-radix-dialog-overlay][data-state="closed"], [data-radix-sheet-overlay][data-state="closed"]');
+    closedOverlays.forEach((el) => {
+      const htmlEl = el as HTMLElement;
+      if (htmlEl.hasAttribute('data-radix-overlay')) {
+        htmlEl.remove();
+      }
+    });
+    
+    // Remove Select/Popover portals only if they contain closed content
+    const portals = document.querySelectorAll('[data-radix-portal]');
+    portals.forEach((el) => {
+      const htmlEl = el as HTMLElement;
+      const hasOpenContent = htmlEl.querySelector('[data-state="open"]');
+      const hasClosedOverlay = htmlEl.querySelector('[data-radix-overlay][data-state="closed"]');
+      // Only remove if it has a closed overlay and no open content
+      if (hasClosedOverlay && !hasOpenContent) {
+        htmlEl.remove();
+      }
+    });
+    
+    // Navigate after cleanup
+    if (user.role === "gardener") {
+      setLocation("/gardener/dashboard");
+    } else if (user.role === "admin") {
+      setLocation("/admin/dashboard");
+    } else {
+      setLocation("/");
+    }
+  }, [user, setLocation]);
+
+  if (user) return null;
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
@@ -71,7 +111,7 @@ export default function AuthPage() {
 
 function LoginForm({ onLogin, isPending }: { onLogin: (data: any) => void, isPending: boolean }) {
   const form = useForm({
-    defaultValues: { username: "", password: "" },
+    defaultValues: { username: "", password: "", role: "user" },
   });
 
   return (
@@ -84,15 +124,51 @@ function LoginForm({ onLogin, isPending }: { onLogin: (data: any) => void, isPen
         <Label htmlFor="password">Password</Label>
         <Input id="password" type="password" {...form.register("password")} required />
       </div>
+      <div className="space-y-2">
+        <Label>Role</Label>
+        <Select
+          value={form.watch("role")}
+          onValueChange={(value) => form.setValue("role", value as "user" | "gardener" | "admin", { shouldValidate: true })}
+        >
+          <SelectTrigger className="h-11 rounded-xl bg-secondary/20 border border-border/60 px-4">
+            <SelectValue placeholder="Select role" />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl border border-border/60 bg-background">
+            <SelectItem className="rounded-md focus:bg-primary/10 focus:text-primary" value="user">
+              User
+            </SelectItem>
+            <SelectItem className="rounded-md focus:bg-primary/10 focus:text-primary" value="gardener">
+              Gardener
+            </SelectItem>
+            <SelectItem className="rounded-md focus:bg-primary/10 focus:text-primary" value="admin">
+              Admin
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <Button type="submit" className="w-full" disabled={isPending}>
         {isPending ? "Logging in..." : "Login"}
       </Button>
+      <p className="text-center text-sm text-muted-foreground mt-2">
+        <Link href="/forgot-password" className="text-primary hover:underline">
+          Forgot password?
+        </Link>
+      </p>
     </form>
   );
 }
 
+const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(/[A-Z]/, "Password must include at least 1 uppercase letter")
+  .regex(/[a-z]/, "Password must include at least 1 lowercase letter")
+  .regex(/[0-9]/, "Password must include at least 1 number");
+
 const registerSchema = insertUserSchema.extend({
-  confirmPassword: z.string()
+  role: z.enum(["user", "gardener"]),
+  password: passwordSchema,
+  confirmPassword: z.string().min(1, "Confirm your password"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -101,7 +177,14 @@ const registerSchema = insertUserSchema.extend({
 function RegisterForm({ onRegister, isPending }: { onRegister: (data: any) => void, isPending: boolean }) {
   const form = useForm({
     resolver: zodResolver(registerSchema),
-    defaultValues: { username: "", password: "", confirmPassword: "", fullName: "", email: "" },
+    defaultValues: {
+      username: "",
+      password: "",
+      confirmPassword: "",
+      fullName: "",
+      email: "",
+      role: "user",
+    },
   });
 
   return (
@@ -119,17 +202,41 @@ function RegisterForm({ onRegister, isPending }: { onRegister: (data: any) => vo
         <Label>Email</Label>
         <Input type="email" {...form.register("email")} />
       </div>
+      <div className="space-y-2">
+        <Label>Role</Label>
+        <Select
+          value={form.watch("role")}
+          onValueChange={(value) => form.setValue("role", value)}
+        >
+          <SelectTrigger className="h-11 rounded-xl bg-secondary/20 border border-border/60 px-4">
+            <SelectValue placeholder="Select role" />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl border border-border/60 bg-background">
+            <SelectItem className="rounded-md focus:bg-primary/10 focus:text-primary" value="user">
+              User
+            </SelectItem>
+            <SelectItem className="rounded-md focus:bg-primary/10 focus:text-primary" value="gardener">
+              Gardener
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Password</Label>
           <Input type="password" {...form.register("password")} />
+          {form.formState.errors.password && (
+            <span className="text-xs text-destructive">{form.formState.errors.password.message}</span>
+          )}
         </div>
         <div className="space-y-2">
           <Label>Confirm</Label>
           <Input type="password" {...form.register("confirmPassword")} />
+          {form.formState.errors.confirmPassword && (
+            <span className="text-xs text-destructive">{form.formState.errors.confirmPassword.message}</span>
+          )}
         </div>
       </div>
-      {form.formState.errors.confirmPassword && <span className="text-xs text-destructive">{form.formState.errors.confirmPassword.message}</span>}
       <Button type="submit" className="w-full" disabled={isPending}>
         {isPending ? "Creating account..." : "Create Account"}
       </Button>

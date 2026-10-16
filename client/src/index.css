@@ -62,11 +62,30 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-body);
+    pointer-events: auto !important;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     @apply font-bold tracking-tight text-foreground;
+  }
+
+  /* Prevent stuck overlays */
+  body:not([data-modal-open="true"]) {
+    pointer-events: auto !important;
+    overflow: auto !important;
+  }
+
+  /* Remove any leftover Bootstrap modal-backdrop */
+  .modal-backdrop,
+  [class*="modal-backdrop"] {
+    display: none !important;
+  }
+
+  /* Ensure dropdown menu is always visible on all pages */
+  [data-radix-dropdown-menu-content],
+  [data-radix-popper-content-wrapper] {
+    z-index: 9999 !important;
   }
 }
 

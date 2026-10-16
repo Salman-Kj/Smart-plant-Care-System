@@ -31,8 +31,12 @@ export async function setupVite(server: Server, app: Express) {
 
   app.use(vite.middlewares);
 
+  // SPA fallback: serve index.html for non-API routes only (avoid returning HTML for /api/*)
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
+    if (url.startsWith("/api/")) {
+      return next();
+    }
 
     try {
       const clientTemplate = path.resolve(

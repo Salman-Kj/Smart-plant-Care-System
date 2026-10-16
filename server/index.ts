@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
@@ -14,6 +15,7 @@ declare module "http" {
 
 app.use(
   express.json({
+    limit: "10mb",
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
@@ -60,6 +62,33 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Test database connection first
+  try {
+    const { testDatabaseConnection } = await import("./db");
+    await testDatabaseConnection();
+  } catch (error) {
+    log("Failed to connect to database. Server will not start.", "error");
+    process.exit(1);
+  }
+
+  // Seed sample blog articles if none published yet; patch imageUrl for existing ones
+  try {
+    const { storage } = await import("./storage");
+    const { seedArticlesIfNeeded, patchArticleImagesIfNeeded } = await import("./seed-articles");
+    await seedArticlesIfNeeded(storage);
+    await patchArticleImagesIfNeeded(storage);
+  } catch (e) {
+    log("Seed articles skipped or failed: " + (e as Error).message);
+  }
+
+  // Patch gardener hourly rates: 25 → 250, 35 → 350
+  try {
+    const { patchGardenerRatesIfNeeded } = await import("./patch-gardeners");
+    await patchGardenerRatesIfNeeded();
+  } catch (e) {
+    log("Patch gardener rates skipped or failed: " + (e as Error).message);
+  }
+
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -85,14 +114,12 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
-  httpServer.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
-    },
-  );
+  const listenOptions =
+    process.platform === "win32"
+      ? { port, host: "0.0.0.0" }
+      : { port, host: "0.0.0.0", reusePort: true };
+
+  httpServer.listen(listenOptions, () => {
+    log(`serving on port ${port}`);
+  });
 })();

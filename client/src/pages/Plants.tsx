@@ -1,6 +1,7 @@
 import { usePlants } from "@/hooks/use-plants";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
+import { useWishlist } from "@/hooks/use-wishlist";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -8,24 +9,49 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, ShoppingCart, Loader2 } from "lucide-react";
+import { Plus, ShoppingCart, Loader2, Heart } from "lucide-react";
+import { PlantCardSkeleton } from "@/components/ui/plant-card-skeleton";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertPlantSchema } from "@shared/schema";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
+import { demoPlantsByCategory, plantCategories } from "@/data/store-catalog";
 
 export default function PlantsPage() {
   const { plants, isLoading } = usePlants();
   const { user } = useAuth();
   const [isSellDialogOpen, setIsSellDialogOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("indoor");
+  const [searchQuery, setSearchQuery] = useState("");
+  const categories = plantCategories;
+  const displayPlants =
+    demoPlantsByCategory[selectedCategory as keyof typeof demoPlantsByCategory] || plants;
+  const filteredPlants = displayPlants.filter((plant) => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      plant.name?.toLowerCase().includes(query) ||
+      plant.description?.toLowerCase().includes(query)
+    );
+  });
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
-        <div>
-          <h1 className="text-4xl font-display font-bold mb-2">Plant Marketplace</h1>
-          <p className="text-muted-foreground">Buy rare plants or sell your own from your home garden.</p>
+      <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
+        <div className="w-full">
+          <p className="text-sm text-muted-foreground">Plant & Care Store</p>
+          <h1 className="text-4xl font-display font-bold mb-2">Plants</h1>
+          <p className="text-muted-foreground">Buy healthy indoor and outdoor plants for your home garden.</p>
+        </div>
+        <div className="w-full md:w-72">
+          <Input
+            placeholder="Search plants..."
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            className="border-emerald-200 bg-emerald-50/40 focus-visible:ring-emerald-200"
+          />
         </div>
         
         {user && (
@@ -44,16 +70,37 @@ export default function PlantsPage() {
           </Dialog>
         )}
       </div>
+      <div className="mb-8">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+          {categories.map((category) => {
+            const isActive = selectedCategory === category.value;
+            return (
+              <Button
+                key={category.value}
+                variant={isActive ? "default" : "outline"}
+                className="rounded-full whitespace-nowrap"
+                onClick={() => setSelectedCategory(category.value)}
+              >
+                {category.label}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>
-      ) : plants.length === 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <PlantCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : filteredPlants.length === 0 ? (
         <div className="text-center py-20 bg-secondary/20 rounded-3xl">
-          <p className="text-xl text-muted-foreground">No plants listed yet. Be the first!</p>
+          <p className="text-xl text-muted-foreground">No plants found in this category.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {plants.map((plant) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {filteredPlants.map((plant) => (
             <PlantCard key={plant.id} plant={plant} />
           ))}
         </div>
@@ -63,50 +110,104 @@ export default function PlantsPage() {
 }
 
 function PlantCard({ plant }: { plant: any }) {
-  const { addToCart } = useCart();
+  const { addToCart, addStoreItem } = useCart();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isPlantInWishlist, toggleWishlist } = useWishlist(!!user);
+  const detailHref = `/store/product/plants/${plant.id}`;
+  const canWishlist = !!user;
+
+  const getFallbackPrice = (label?: string) => {
+    if (!label) return 0;
+    const match = label.replace(/,/g, "").match(/\d+/);
+    return match ? Number(match[0]) : 0;
+  };
 
   const handleAddToCart = () => {
     if (!user) {
       toast({ title: "Login required", description: "Please login to add items to cart.", variant: "destructive" });
       return;
     }
-    
+    const isStoreItem = typeof plant.id === "string";
+    if (isStoreItem) {
+      addStoreItem.mutate({
+        name: plant.name,
+        price: plant.priceValue ?? getFallbackPrice(plant.priceLabel),
+        imageUrl: plant.imageUrl,
+        category: plant.category || "indoor",
+        description: plant.description,
+      });
+      return;
+    }
     addToCart.mutate({ plantId: plant.id, quantity: 1 });
   };
 
+  const priceText =
+    plant.priceLabel ?? (typeof plant.price === "number" ? `Rs ${(plant.price / 100).toFixed(2)}` : "");
+
   return (
-    <div className="group bg-card rounded-2xl overflow-hidden border shadow-sm hover:shadow-xl hover:border-primary/30 transition-all duration-300 flex flex-col h-full">
-      <div className="relative aspect-[4/3] overflow-hidden bg-secondary/30">
-        <img 
-          src={plant.imageUrl} 
-          alt={plant.name} 
-          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-        />
-        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold shadow-sm uppercase tracking-wide text-primary">
-          {plant.category}
-        </div>
-      </div>
-      
-      <div className="p-6 flex flex-col flex-grow">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="text-xl font-bold font-display line-clamp-1">{plant.name}</h3>
-          <span className="text-lg font-bold text-primary">${(plant.price / 100).toFixed(2)}</span>
-        </div>
-        <p className="text-muted-foreground text-sm line-clamp-2 mb-4 flex-grow">{plant.description}</p>
-        
-        <Button 
-          onClick={handleAddToCart} 
-          disabled={addToCart.isPending}
-          className="w-full mt-auto rounded-xl"
-        >
-          {addToCart.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (
-            <>
-              <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
-            </>
+    <div className="group bg-card rounded-2xl overflow-hidden border shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col h-full">
+      <Link href={detailHref} className="block">
+        <div className="relative aspect-[4/3] overflow-hidden bg-secondary/30">
+          <img
+            src={plant.imageUrl}
+            alt={plant.name}
+            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+          />
+          {canWishlist && (
+            <button
+              type="button"
+              aria-label={isPlantInWishlist(plant.id) ? "Remove from wishlist" : "Add to wishlist"}
+              className="absolute top-3 left-3 p-2 rounded-full bg-white/90 backdrop-blur shadow-sm hover:bg-white transition-colors z-10"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleWishlist(plant.id);
+              }}
+            >
+              <Heart
+                className={`h-4 w-4 ${isPlantInWishlist(plant.id) ? "fill-primary text-primary" : "text-muted-foreground"}`}
+              />
+            </button>
           )}
-        </Button>
+          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold shadow-sm uppercase tracking-wide text-primary">
+            {plant.category}
+          </div>
+        </div>
+      </Link>
+
+      <div className="p-4 flex flex-col flex-grow">
+        <div className="flex justify-between items-start mb-1">
+          <Link href={detailHref} className="block">
+            <h3 className="text-base font-semibold font-display line-clamp-1">{plant.name}</h3>
+          </Link>
+          <span className="text-base font-bold text-primary">{priceText}</span>
+        </div>
+        <p className="text-muted-foreground text-xs line-clamp-2 mb-3 flex-grow">
+          {plant.description || "Indoor plant"}
+        </p>
+
+        <div className="flex flex-col gap-2 mt-auto">
+          <Link href={detailHref}>
+            <Button variant="outline" size="sm" className="w-full rounded-lg h-9">
+              View details
+            </Button>
+          </Link>
+          <Button
+            onClick={handleAddToCart}
+            disabled={addToCart.isPending || addStoreItem.isPending}
+            size="sm"
+            className="w-full rounded-lg h-9"
+          >
+            {addToCart.isPending || addStoreItem.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,14 @@
+.git
+.env
+.env.*
+!.env.example
+node_modules
+.venv
+dist
+uploads
+PlantVillage
+PlantCombined
+PlantDoc train
+PlantDoc test
+smartplantcarereport.txt
+postgresql.log

@@ -4,3 +4,17 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Local configuration and generated files
+.env
+.env.*
+!.env.example
+uploads/
+*.log
+__pycache__/
+*.py[cod]
+
+# Accidental empty scratch files from the Replit export
+/NODE_ENV=development
+/npm
+/rest-express@1.0.0

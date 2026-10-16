@@ -1,0 +1,67 @@
+{
+  "default": {
+    "cause": "Unknown cause. Please consult a local agricultural expert.",
+    "solution": "Isolate the plant, remove affected leaves, and improve airflow.",
+    "recommended_medicine": "Use a broad-spectrum fungicide per label instructions."
+  },
+  "Pepper__bell___Bacterial_spot": {
+    "cause": "Bacterial infection often spread by splashing water and contaminated tools.",
+    "solution": "Remove infected leaves, avoid overhead watering, and sanitize tools.",
+    "recommended_medicine": "Copper-based bactericide applied as directed."
+  },
+  "Pepper__bell___healthy": {
+    "cause": "Healthy plant with no visible disease symptoms.",
+    "solution": "Maintain proper watering, nutrition, and sunlight.",
+    "recommended_medicine": "None"
+  },
+  "Potato___Early_blight": {
+    "cause": "Fungal disease favored by warm, humid conditions.",
+    "solution": "Remove infected foliage and rotate crops yearly.",
+    "recommended_medicine": "Chlorothalonil or mancozeb-based fungicide."
+  },
+  "Potato___Late_blight": {
+    "cause": "Oomycete infection that spreads quickly in cool, wet weather.",
+    "solution": "Remove infected plants and improve field drainage.",
+    "recommended_medicine": "Protective fungicides such as mancozeb."
+  },
+  "Potato___healthy": {
+    "cause": "Healthy plant with no visible disease symptoms.",
+    "solution": "Continue regular care and monitoring.",
+    "recommended_medicine": "None"
+  },
+  "Tomato_Bacterial_spot": {
+    "cause": "Bacterial infection spread through splashing water and tools.",
+    "solution": "Prune infected leaves, avoid overhead irrigation, and disinfect tools.",
+    "recommended_medicine": "Copper-based bactericide."
+  },
+  "Tomato_Early_blight": {
+    "cause": "Fungal disease caused by Alternaria species.",
+    "solution": "Remove infected leaves and mulch to reduce soil splash.",
+    "recommended_medicine": "Chlorothalonil-based fungicide."
+  },
+  "Tomato_Late_blight": {
+    "cause": "Oomycete infection thriving in cool, moist conditions.",
+    "solution": "Remove infected plants and increase airflow.",
+    "recommended_medicine": "Mancozeb or other late blight fungicides."
+  },
+  "Tomato_Leaf_Mold": {
+    "cause": "Fungal disease favored by high humidity and poor airflow.",
+    "solution": "Increase ventilation and remove affected leaves.",
+    "recommended_medicine": "Copper-based fungicide."
+  },
+  "Tomato_Septoria_leaf_spot": {
+    "cause": "Fungal infection spread by rain splash and wet leaves.",
+    "solution": "Remove affected leaves and avoid overhead watering.",
+    "recommended_medicine": "Chlorothalonil or mancozeb fungicide."
+  },
+  "Tomato_Spider_mites_Two_spotted_spider_mite": {
+    "cause": "Mite infestation often due to hot, dry conditions.",
+    "solution": "Increase humidity and spray leaves with water.",
+    "recommended_medicine": "Insecticidal soap or neem oil."
+  },
+  "Tomato__Target_Spot": {
+    "cause": "Fungal disease associated with warm, humid environments.",
+    "solution": "Remove infected leaves and improve airflow.",
+    "recommended_medicine": "Azoxystrobin or chlorothalonil fungicide."
+  }
+}

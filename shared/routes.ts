@@ -1,5 +1,7 @@
 import { z } from 'zod';
-import { insertUserSchema, insertPlantSchema, insertGardenerSchema, insertOrderSchema, users, plants, gardeners, orders, diseaseLogs } from './schema';
+import { insertUserSchema, insertPlantSchema, insertGardenerSchema, insertOrderSchema, insertMessageSchema, users, plants, gardeners, orders, diseaseLogs, bookings, messages } from './schema';
+
+export type { InsertUser, InsertPlant, Order } from './schema';
 
 // Shared error schemas
 export const errorSchemas = {
@@ -44,7 +46,7 @@ export const api = {
     login: {
       method: 'POST' as const,
       path: '/api/login',
-      input: z.object({ username: z.string(), password: z.string() }),
+      input: z.object({ username: z.string(), password: z.string(), role: z.enum(["user", "gardener", "admin"]) }),
       responses: {
         200: z.custom<typeof users.$inferSelect>(),
         401: errorSchemas.unauthorized,
@@ -103,9 +105,115 @@ export const api = {
     hire: { // Simple "hire" request
       method: 'POST' as const,
       path: '/api/gardeners/:id/hire',
-      input: z.object({ date: z.string(), hours: z.number() }),
+      input: z.object({
+        dateTime: z.string().optional(),
+        date: z.string().optional(),
+        hours: z.number(),
+        userId: z.number().optional(),
+        userName: z.string().optional(),
+        userEmail: z.string().optional(),
+        userPhone: z.string().optional(),
+        userAddress: z.string().optional(),
+        bookingTime: z.string().optional(),
+        message: z.string().optional(),
+      }),
       responses: {
         200: z.object({ message: z.string(), bookingId: z.number().optional() }),
+      }
+    }
+  },
+  bookings: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/bookings',
+      responses: {
+        200: z.array(z.custom<typeof bookings.$inferSelect & { gardenerName?: string }>()),
+      }
+    },
+    pay: {
+      method: 'POST' as const,
+      path: '/api/bookings/:id/pay',
+      input: z.object({ paymentMethod: z.enum(['card', 'wallet', 'cod']).optional() }),
+      responses: {
+        200: z.custom<typeof bookings.$inferSelect>(),
+        400: z.object({ message: z.string() }),
+        404: z.object({ message: z.string() }),
+      }
+    },
+    remove: {
+      method: 'DELETE' as const,
+      path: '/api/bookings/:id',
+      responses: {
+        200: z.object({ message: z.string() }),
+      }
+    }
+  },
+  profile: {
+    get: {
+      method: "GET" as const,
+      path: "/api/profile",
+      responses: {
+        200: z.object({
+          fullName: z.string().nullable().optional(),
+          email: z.string().nullable().optional(),
+          phone: z.string().nullable().optional(),
+          address: z.string().nullable().optional(),
+          profileImage: z.string().nullable().optional(),
+        }),
+      },
+    },
+    update: {
+      method: "PUT" as const,
+      path: "/api/profile",
+      input: z.object({
+        fullName: z.string().min(1).max(120).optional(),
+        phone: z.string().max(40).optional().nullable(),
+        address: z.string().max(300).optional().nullable(),
+        profileImage: z.string().optional().nullable(),
+      }),
+      responses: {
+        200: z.object({ message: z.string() }),
+      },
+    },
+    changePassword: {
+      method: "PUT" as const,
+      path: "/api/profile/password",
+      input: z.object({
+        oldPassword: z.string().min(1),
+        newPassword: z.string().min(6),
+      }),
+      responses: {
+        200: z.object({ message: z.string() }),
+      },
+    },
+  },
+  gardenerBookings: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/gardener/bookings',
+      responses: {
+        200: z.array(z.custom<typeof bookings.$inferSelect & { userName?: string }>()),
+      }
+    },
+    accept: {
+      method: 'POST' as const,
+      path: '/api/gardener/booking/:id/accept',
+      responses: {
+        200: z.custom<typeof bookings.$inferSelect>(),
+      }
+    },
+    reject: {
+      method: 'POST' as const,
+      path: '/api/gardener/booking/:id/reject',
+      responses: {
+        200: z.custom<typeof bookings.$inferSelect>(),
+      }
+    },
+    complete: {
+      method: 'POST' as const,
+      path: '/api/gardener/booking/:id/complete',
+      responses: {
+        200: z.custom<typeof bookings.$inferSelect>(),
       }
     }
   },
@@ -159,6 +267,20 @@ export const api = {
         201: z.any(),
       }
     },
+    addStore: {
+      method: 'POST' as const,
+      path: '/api/cart/store-item',
+      input: z.object({
+        name: z.string(),
+        price: z.number(),
+        imageUrl: z.string(),
+        category: z.string(),
+        description: z.string().optional(),
+      }),
+      responses: {
+        201: z.any(),
+      }
+    },
     update: {
       method: 'PATCH' as const,
       path: '/api/cart/:plantId',
@@ -172,6 +294,38 @@ export const api = {
       path: '/api/cart/:plantId',
       responses: {
         200: z.object({ message: z.string() }),
+      }
+    }
+  },
+  messages: {
+    create: {
+      method: 'POST' as const,
+      path: '/api/messages',
+      input: insertMessageSchema,
+      responses: {
+        201: z.custom<typeof messages.$inferSelect>(),
+        400: errorSchemas.validation,
+      }
+    },
+    getForBooking: {
+      method: 'GET' as const,
+      path: '/api/messages/booking/:bookingId',
+      responses: {
+        200: z.array(z.custom<typeof messages.$inferSelect & { senderName: string; receiverName: string }>()),
+      }
+    },
+    getForUser: {
+      method: 'GET' as const,
+      path: '/api/messages',
+      responses: {
+        200: z.array(z.custom<typeof messages.$inferSelect & { senderName: string; receiverName: string; bookingId: number }>()),
+      }
+    },
+    markRead: {
+      method: 'PUT' as const,
+      path: '/api/messages/:id/read',
+      responses: {
+        200: z.custom<typeof messages.$inferSelect>(),
       }
     }
   }

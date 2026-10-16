@@ -27,6 +27,26 @@ export function useCart() {
     },
   });
 
+  const addStoreItem = useMutation({
+    mutationFn: async (item: {
+      name: string;
+      price: number;
+      imageUrl: string;
+      category: string;
+      description?: string;
+    }) => {
+      const res = await apiRequest("POST", api.cart.addStore.path, item);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.cart.list.path] });
+      toast({ title: "Added to cart", description: "Item has been added to your cart." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Failed to add to cart", description: error.message, variant: "destructive" });
+    },
+  });
+
   const updateQuantity = useMutation({
     mutationFn: async ({ plantId, quantity }: { plantId: number; quantity: number }) => {
       const res = await apiRequest("PATCH", `/api/cart/${plantId}`, { quantity });
@@ -60,6 +80,7 @@ export function useCart() {
     items,
     isLoading,
     addToCart,
+    addStoreItem,
     updateQuantity,
     removeFromCart,
     total,

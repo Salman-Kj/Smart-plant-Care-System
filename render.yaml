@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: smart-plant-care
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: smart-plant-care-db
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+
+databases:
+  - name: smart-plant-care-db
+    databaseName: smart_plant_care
+    user: smart_plant_care
+    plan: free
